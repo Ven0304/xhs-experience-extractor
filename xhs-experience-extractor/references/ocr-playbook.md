@@ -32,12 +32,31 @@ If no OCR exists, use visual reading in batches:
 - 3-4 pages when text is large and clean.
 - Re-emit or crop only unclear pages.
 
+## Visual Reliability Rules
+
+Treat visual recognition quality as evidence, not as an implicit guarantee. For every page, record both readability and confidence:
+
+- `readable` describes how much of the page can be seen: `yes | partial | no`.
+- `confidence` describes how certain the extracted content came from the image rather than inference: `high | medium | low | failed`.
+- `confidence_reason` explains uncertainty, such as small text, blur, dense tables, low contrast, cropping, compression, watermark overlap, or only seeing layout/chart type.
+
+Text certainty rule: if the exact text cannot be confirmed, write `无法确认具体文字内容，只能看出大致版式/图表类型` or a similarly explicit uncertainty note. Do not invent plausible wording, numbers, materials, schedules, or method steps to make the page look complete.
+
+Stop reading image text as source evidence when either condition is met:
+
+- 2 consecutive pages are `confidence: low` or `confidence: failed`.
+- 3 consecutive pages are `confidence: medium`, `confidence: low`, or `confidence: failed`, and the main conclusion depends on image-body text.
+
+After stopping, use metadata, caption, tags, visible stats, comments, and any high-confidence image elements only. State that the image body could not be reliably extracted. Do not pad the final method with low-confidence image details.
+
 ## Quality Checklist
 
 - Use `urlDefault`, not `urlPre`, for readable long images.
 - Keep original dimensions for OCR/vision.
 - Verify page count against the carousel count or manifest count.
 - Record page-by-page notes before final synthesis.
+- Record page-level confidence before using image text as evidence.
+- Mark low-confidence image-derived claims with `[OCR-low-confidence]`.
 - Separate method from anecdote and promotional phrasing.
 - Do not quote long passages from the post; summarize the advice.
 
@@ -60,14 +79,20 @@ missing_or_uncertain: <pages, comments, or metadata not available>
 page01
 - role: hook | baseline | method | material | result | caveat
 - readable: yes | partial | no
+- confidence: high | medium | low | failed
+- confidence_reason: <why this confidence level was assigned>
+- text_certainty_rule: if uncertain, say the exact text cannot be confirmed instead of guessing
 - extracted_points:
   - <short factual point or method step>
-- evidence_grade: direct fact | repeatable method | personal-fit | weak claim | evidence gap
+- evidence_grade: direct fact | repeatable method | personal-fit | weak claim | evidence gap | OCR-low-confidence
 - follow_up: <crop, reread, verify, or none>
 
 page02
 - role:
 - readable:
+- confidence:
+- confidence_reason:
+- text_certainty_rule:
 - extracted_points:
 - evidence_grade:
 - follow_up:
@@ -82,9 +107,12 @@ page02
 - claimed result:
 - risks / fit limits:
 - uncertain pages:
+- recognition_quality: <X/Y high-or-medium confidence, Z low-or-failed, stop rule triggered or not>
 ```
 
-Use `readable: partial` when the main point is clear but small text, table cells, or screenshots are uncertain. Put unsupported dramatic outcomes under `weak claim` even if the OCR is clear.
+Use `readable: partial` when the main point is visible but small text, table cells, or screenshots are uncertain. Use `confidence: medium` only when the gist is supported by visible text but exact details may be incomplete. Use `confidence: low` when the page suggests a theme but key text cannot be confirmed. Use `confidence: failed` when no specific content can be extracted.
+
+Put unsupported dramatic outcomes under `weak claim` even if the OCR is clear. If a useful claim relies entirely on low-confidence image recognition, keep it only as `[OCR-low-confidence]` or move it to risks / evidence gaps. A failed page can only support `evidence gap`; it cannot support a concrete method claim.
 ## Output Notes Template
 
 ```markdown

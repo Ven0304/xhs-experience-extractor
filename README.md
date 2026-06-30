@@ -29,7 +29,8 @@ The skill is designed to:
 - extract carousel image URLs from server-rendered HTML;
 - download full-resolution images and generate `manifest.json`;
 - guide OCR or visual reading in small batches;
-- filter social-media filler, soft ads, and weak claims;
+- record page-level recognition confidence and OCR uncertainty;
+- filter social-media filler, soft ads, weak claims, and low-confidence visual claims;
 - synthesize reusable methods, evidence gaps, disagreement, and action plans.
 
 ### What It Does Not Do
@@ -94,6 +95,15 @@ Expected output includes:
 - `manifest.json` with source metadata, URL count, downloaded count, image paths, dimensions, and errors;
 - optional `source.html` when `--save-html` is used.
 
+### OCR And Visual Reliability
+
+For carousel posts whose main text lives in images, the skill treats recognition quality as an explicit evidence variable instead of assuming OCR or vision is reliable.
+
+- Each page should record both `readable: yes | partial | no` and `confidence: high | medium | low | failed`.
+- Low-confidence image-derived claims should be labeled `[OCR-low-confidence]` and kept separate from stronger evidence.
+- If consecutive pages cannot be read reliably, the workflow stops extracting image-body details and falls back to metadata, caption, tags, stats, comments, and clearly visible high-confidence elements.
+- Final single-post and multi-post outputs should include a short recognition quality note, such as how many pages were clear and which conclusions are uncertain.
+
 ### Local Smoke Test
 
 A pure local smoke test is included to verify the extractor without Agent Reach, OpenCLI, Xiaohongshu, or public internet access.
@@ -151,8 +161,10 @@ This skill is derived from the Xiaohongshu/OpenCLI portion of Agent Reach, but i
 ### Safety And Evidence Rules
 
 - Treat Xiaohongshu posts as noisy evidence, not authoritative truth.
-- Preserve source URLs, manifest paths, page-level notes, and uncertainty labels.
-- Mark missing comments, unreadable images, inaccessible short links, and OCR ambiguity as evidence gaps.
+- Preserve source URLs, manifest paths, page-level notes, confidence labels, and uncertainty labels.
+- Mark missing comments, unreadable images, inaccessible short links, OCR ambiguity, and failed visual recognition as evidence gaps.
+- Do not promote medium-confidence image text to cross-post consensus unless independent evidence supports it.
+- Do not turn low-confidence OCR or visual guesses into actionable methods.
 - Do not infer consensus from missing or incomplete comments.
 - Summarize copyrighted post text instead of quoting long passages.
 
@@ -187,7 +199,8 @@ This skill is derived from the Xiaohongshu/OpenCLI portion of Agent Reach, but i
 - 从服务端渲染 HTML 中提取轮播图 URL；
 - 下载原图并生成 `manifest.json`；
 - 指导 OCR 或分批视觉阅读；
-- 过滤社交平台口水话、软广和弱证据 claims；
+- 记录逐页识别置信度和 OCR 不确定性；
+- 过滤社交平台口水话、软广、弱证据 claims 和低置信视觉结论；
 - 汇总可复用方法、证据缺口、分歧点和行动方案。
 
 ### 它不做什么
@@ -252,6 +265,15 @@ python "xhs-experience-extractor\scripts\extract_xhs_images.py" "<xhs-url>" --ou
 - `manifest.json`，包含来源元数据、URL 数量、下载数量、图片路径、尺寸和错误信息；
 - 使用 `--save-html` 时还会保存 `source.html`。
 
+### OCR 和视觉识别可靠性
+
+对于正文主要写在轮播图里的帖子，这个 skill 会把识别质量当作显式证据变量，而不是默认 OCR 或视觉能力一定可靠。
+
+- 每页都应同时记录 `readable: yes | partial | no` 和 `confidence: high | medium | low | failed`。
+- 低置信图片结论应标注 `[OCR-low-confidence]`，并和更强证据分开处理。
+- 如果连续多页无法可靠读取，流程会停止继续抽取图片正文细节，转而使用元数据、简介、标签、统计信息、评论和少量高置信可见元素。
+- 单帖和多帖最终输出都应包含简短的识别质量说明，例如有多少页清晰、哪些结论需要谨慎核实。
+
 ### 本地 Smoke Test
 
 仓库内置一个纯本地 smoke test，用来验证 extractor 不依赖 Agent Reach、OpenCLI、小红书或公网访问。
@@ -309,8 +331,10 @@ downloaded_count: 2
 ### 安全和证据规则
 
 - 把小红书帖子视为噪声较多的经验材料，而不是权威事实。
-- 保留来源 URL、manifest 路径、逐页笔记和不确定性标记。
-- 对评论缺失、图片不可读、短链不可访问、OCR 模糊等情况标注 evidence gap。
+- 保留来源 URL、manifest 路径、逐页笔记、置信度标签和不确定性标记。
+- 对评论缺失、图片不可读、短链不可访问、OCR 模糊、视觉识别失败等情况标注 evidence gap。
+- 不把中等置信度的图片文字直接升级为跨帖共识，除非有独立证据支持。
+- 不把低置信 OCR 或视觉猜测写成可执行方法。
 - 不从缺失或不完整的评论里推断共识。
 - 对有版权的帖子正文做总结，不长段引用原文。
 

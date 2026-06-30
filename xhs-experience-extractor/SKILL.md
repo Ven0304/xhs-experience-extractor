@@ -125,7 +125,9 @@ Use this order:
 3. If OCR is available, run OCR on downloaded images, then visually spot-check low-confidence or key pages.
 4. If OCR is not available, read local image files in batches of 3-4 pages with the current agent's native image-viewing or image-attachment capability. In Codex, use the built-in local image viewing tool with absolute Windows paths to the downloaded files, for example `C:\tmp\xhs-note\page01.jpg`, or workspace-local paths when `C:\tmp` is not writable. In Claude Code, use its available image/file attachment path if present; if no reliable image-viewing mechanism is available, report the blocker instead of inventing a code emitter. Do not send all images at once unless there are only a few.
 5. If image viewing is blocked by desktop, agent, or Windows sandbox restrictions, report the blocker and ask the user to provide screenshots/images directly or approve an accessible workspace output path. Do not invent alternate image-emission code or rely on unverified REPL/image-emitter APIs.
-6. For long carousels, write a compact per-page note while reading.
+6. Before synthesis, create page-by-page OCR evidence notes with `readable`, `confidence`, `confidence_reason`, extracted points, and follow-up needs. Use `confidence: high | medium | low | failed` to show how certain the extracted content came from the image rather than inference.
+7. Stop reading image text as source evidence if 2 consecutive pages are `confidence: low/failed`, or if 3 consecutive pages are `confidence: medium/low/failed` and the main conclusion depends on image-body text. After stopping, use only metadata, caption, tags, visible stats, comments, and high-confidence image elements; state that the image body could not be reliably extracted.
+8. For long carousels, write a compact per-page note while reading.
 
 Suggested per-page note format:
 
@@ -139,6 +141,8 @@ OCR quality guardrails:
 - Prefer `urlDefault` over preview images.
 - Preserve original resolution; do not crop unless the image is too large or contains irrelevant margins.
 - If a page contains dense tables or small text, zoom/crop that page only and reread it.
+- If exact text cannot be confirmed, write that it cannot be confirmed; do not invent plausible wording, numbers, materials, schedules, or method steps.
+- Do not pad an actionable method with low-confidence image details just to make the output feel complete.
 - Do not quote long copyrighted text verbatim; summarize and use short excerpts only when necessary.
 
 ### 5. Filter Noise Before Extracting Experience
@@ -164,7 +168,7 @@ Flag these instead of silently trusting them:
 
 - Soft-ad indicators: affiliate links, discount codes, course enrollment prompts, repeated brand mentions, identical product phrasing across posts, private-message bait, or claims that a paid tool is mandatory.
 - Unsupported outcomes: dramatic score jumps, guaranteed results, extreme timelines, or methods that omit baseline and workload.
-- Ambiguous OCR: garbled text, unclear table cells, cropped screenshots, or pages where the main claim depends on unreadable details.
+- Ambiguous OCR: garbled text, unclear table cells, cropped screenshots, low-confidence visual reading, or pages where the main claim depends on unreadable details. Mark low-confidence image-derived claims with `[OCR-low-confidence]`.
 
 When writing the final answer, do not summarize discarded noise. If a noisy phrase points to a real method, rewrite it as the underlying action. Example: convert `姐妹们这个方法真的绝绝子` into the actual method, evidence, and fit condition; if none exist, omit it.
 
@@ -191,7 +195,14 @@ For experience posts, grade claims by evidence strength instead of treating all 
 - **Cross-post consensus**: advice repeated across multiple independent posts or supported by comments and examples.
 - **Personal-fit advice**: advice tied to the author's baseline, school, job, exam score, budget, region, or time constraint.
 - **Weak or risky claims**: dramatic score jumps, guaranteed outcomes, extreme timelines, vague "must use" tools, affiliate links, course promotion, or claims without process details.
-- **Evidence gap**: missing image pages, unreadable OCR, inaccessible comments, unresolved short links, or unclear author baseline.
+- **Evidence gap**: missing image pages, unreadable OCR, inaccessible comments, unresolved short links, unclear author baseline, or pages with `confidence: failed`.
+
+Apply an OCR reliability discount before promoting any image-derived claim:
+
+- Claims fully dependent on `confidence: low` visual/OCR reading must be downgraded or labeled `[OCR-low-confidence]`, even if they look like a repeatable method.
+- `confidence: medium` image content may be used as a method clue, but do not promote it to cross-post consensus unless high-confidence images, caption, comments, metadata, or independent posts support it.
+- `confidence: failed` pages can only support an `evidence gap`; do not extract concrete body-text claims from them.
+- Keep OCR risk visible in aggregation tables and `谨慎对待`; do not mix low-confidence image claims with high-confidence evidence without labeling the difference.
 
 When advice is useful but weakly supported, keep it but label the condition: "worth trying if...", "only fits...", or "do not generalize from this alone." Do not turn one viral anecdote into a general rule.
 
@@ -234,6 +245,9 @@ Title, author, stats, URL.
 **作者背景**
 Short factual baseline.
 
+**识别质量说明**
+共 X 页，Y 页高/中置信，Z 页低置信或无法确认；相关结论已标注 `[OCR-low-confidence]`。如果图片正文不可可靠读取，写明：该帖子图片正文因视觉识别质量不足未能完整提取，以下结论仅基于标题/简介/评论/可确认的图片元素。
+
 **核心观点**
 1-3 bullets.
 
@@ -253,6 +267,9 @@ For multiple posts, use this synthesis shape:
 **样本范围**
 Queries used, number of posts read, selection logic, and evidence gaps.
 
+**识别质量说明**
+Summarize OCR/visual coverage across sampled posts, for example: 共 X 页，Y 页高/中置信，Z 页低置信或无法确认；低置信图片结论已标注 `[OCR-low-confidence]` 并放入 `谨慎对待`。
+
 **共识结论**
 Advice repeated across multiple posts, with the conditions where it applies.
 
@@ -270,7 +287,7 @@ Distinct workflows or strategies, each with suitable user profiles and failure m
 A practical plan, checklist, or decision rule adapted to the user's situation.
 
 **谨慎对待**
-Promotional claims, extreme outcomes, missing context, or advice that does not fit the user.
+Promotional claims, extreme outcomes, missing context, `[OCR-low-confidence]` image-derived claims, or advice that does not fit the user.
 ```
 
 If the request is only a quick scan, compress the structure but still preserve `共识结论`, `分歧点`, and `谨慎对待`.
