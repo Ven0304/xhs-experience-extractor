@@ -1,0 +1,17 @@
+# Local migration/reference copy; not part of the standalone public skill package
+agent-reach/
+
+# Generated smoke-test output
+xhs-experience-extractor/tmp-smoke-output/
+xhs-experience-extractor/xhs-smoke-*/
+xhs-experience-extractor/xhs-note-images/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Local/editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

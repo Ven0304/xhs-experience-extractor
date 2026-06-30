@@ -1,0 +1,4 @@
+interface:
+  display_name: "XHS Experience Extractor"
+  short_description: "Extract Xiaohongshu text, images, OCR, and lessons"
+  default_prompt: "Use $xhs-experience-extractor to read this Xiaohongshu post, OCR its images, and summarize the reusable experience."
