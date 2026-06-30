@@ -168,6 +168,10 @@ This skill is derived from the Xiaohongshu/OpenCLI portion of Agent Reach, but i
 - Do not infer consensus from missing or incomplete comments.
 - Summarize copyrighted post text instead of quoting long passages.
 
+### License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+
 [Back to top](#xhs-experience-extractor-skill)
 
 ---
@@ -337,5 +341,9 @@ downloaded_count: 2
 - 不把低置信 OCR 或视觉猜测写成可执行方法。
 - 不从缺失或不完整的评论里推断共识。
 - 对有版权的帖子正文做总结，不长段引用原文。
+
+### License
+
+本项目采用 MIT License 授权。详见 [LICENSE](LICENSE)。
 
 [返回顶部](#xhs-experience-extractor-skill)
